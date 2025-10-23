@@ -1,0 +1,25 @@
+      {
+        "version": 2,
+        "builds": [
+            // Compilar app.py como función serverless de Python
+            {
+                "src": "app.py",
+                "use": "@vercel/python",
+                "config": { "maxLambdaSize": "15mb" }
+            },
+            // Compilador estático (aunque Flask maneje las rutas)
+            {
+                "src": "static/**/*",
+                "use": "@vercel/static"
+            }
+        ],
+        "routes": [
+            // CRÍTICO: Envía CUALQUIER solicitud (incluyendo / y /static/...) a app.py.
+            // Esto permite que Flask procese las rutas Jinja (url_for) y sirva correctamente los estáticos.
+            {
+                "src": "/(.*)",
+                "dest": "app.py"
+            }
+        ]
+    }
+    
