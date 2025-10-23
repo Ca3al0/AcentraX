@@ -18,15 +18,22 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config.from_object(Config)
 
 # =================================================================
-# === NUEVA COMPROBACIÓN DE SEGURIDAD PARA BASE DE DATOS (CRÍTICO) ===
-# Verifica si la URI de la DB existe en la configuración (debería venir de las variables de entorno).
-# Esto previene el fallo si la DB no está configurada en Vercel.
+# === COMPROBACIÓN DE SEGURIDAD Y TRY/EXCEPT PARA INICIALIZACIÓN DE DB (MÁXIMA RESILIENCIA) ===
+# Verifica si la URI de la DB existe en la configuración.
 IS_DB_CONFIGURED = app.config.get('SQLALCHEMY_DATABASE_URI') is not None
 
 if IS_DB_CONFIGURED:
-    init_app(app) # Inicializa la base de datos solo si está configurada
-    # 1. APLICAR EL WRAPPER VERCEL (SOLUCIÓN AL PROBLEMA DE RUTAS ESTÁTICAS)
-    app.wsgi_app = VercelStaticFiles(app.wsgi_app) 
+    try:
+        init_app(app) # Inicializa la base de datos solo si está configurada
+        # 1. APLICAR EL WRAPPER VERCEL (SOLUCIÓN AL PROBLEMA DE RUTAS ESTÁTICAS)
+        app.wsgi_app = VercelStaticFiles(app.wsgi_app) 
+        print("INFO: Database initialized successfully.")
+    except Exception as e:
+        # Si la inicialización falla (ej. error de credenciales/conexión), forzamos a NO CONFIGURADA.
+        IS_DB_CONFIGURED = False
+        print(f"ERROR: Database initialization FAILED: {e}")
+        print("WARNING: SQLALCHEMY_DATABASE_URI failed to initialize. Skipping DB initialization.")
+        
 else:
     # Si la DB no está configurada, se salta la inicialización, evitando el error 500.
     print("WARNING: SQLALCHEMY_DATABASE_URI missing. Skipping DB initialization.")
