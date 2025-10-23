@@ -72,9 +72,14 @@ def inject_unread_notifications():
             # Lazy import to avoid circular imports
             from services.notification_service import contar_notificaciones_no_leidas
             unread = contar_notificaciones_no_leidas(current_user.id_usuario)
+            # Manejo de error de importación si el módulo services no está disponible
+            if 'contar_notificaciones_no_leidas' not in locals():
+                unread = 0
         else:
             unread = 0
-    except Exception:
+    except Exception as e:
+        # Esto captura errores de conexión a la DB durante la inyección en el contexto
+        # print(f"Error en context_processor: {e}") 
         unread = 0
     return {
         'unread_notifications': unread,
