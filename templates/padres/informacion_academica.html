@@ -1,0 +1,258 @@
+{% extends "padres/base.html" %}
+
+{% block title %}Información Académica{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --accent1: #F95738;
+        --accent2: #EE964B;
+        --accent3: #F4D35E;
+        --accent4: #0D3B66;
+        --light: #FAF0CA;
+        --white: #FFFFFF;
+        --black: #333333;
+        --gray: #666666;
+        --light-gray: #F8F9FA;
+        --border: #E9ECEF;
+        --card-bg: #FFFFFF;
+        --header-bg: #FFFFFF;
+        --main-bg: #F8F9FA;
+        --shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    body {
+        background-color: var(--main-bg);
+    }
+
+    /* Header de la página */
+    .page-header {
+        background: linear-gradient(135deg, var(--accent4), #1a5080);
+        color: var(--white);
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+    }
+
+    .page-header h2 {
+        color: var(--white);
+        font-weight: 700;
+        font-size: 2rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .page-header h2 i {
+        font-size: 2rem;
+        color: var(--accent3);
+    }
+
+    .page-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.95;
+        font-size: 1.05rem;
+    }
+
+    /* Tarjetas de estudiantes */
+    .estudiante-card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 30px;
+        transition: transform 0.3s, box-shadow 0.3s;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        text-decoration: none;
+        color: var(--black);
+    }
+
+    .estudiante-card:nth-child(3n+1) {
+        border-top: 4px solid var(--accent4);
+    }
+
+    .estudiante-card:nth-child(3n+2) {
+        border-top: 4px solid var(--accent1);
+    }
+
+    .estudiante-card:nth-child(3n) {
+        border-top: 4px solid var(--accent2);
+    }
+
+    .estudiante-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .estudiante-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--white);
+    }
+
+    .estudiante-card:nth-child(3n+1) .estudiante-icon {
+        background: linear-gradient(135deg, var(--accent4), #1a5080);
+        box-shadow: 0 4px 15px rgba(13, 59, 102, 0.3);
+    }
+
+    .estudiante-card:nth-child(3n+2) .estudiante-icon {
+        background: linear-gradient(135deg, var(--accent1), #ff6b4a);
+        box-shadow: 0 4px 15px rgba(249, 87, 56, 0.3);
+    }
+
+    .estudiante-card:nth-child(3n) .estudiante-icon {
+        background: linear-gradient(135deg, var(--accent2), #f0a868);
+        box-shadow: 0 4px 15px rgba(238, 150, 75, 0.3);
+    }
+
+    .estudiante-nombre {
+        color: var(--accent4);
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+    }
+
+    .estudiante-documento {
+        color: var(--gray);
+        font-size: 0.95rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-ver-detalles {
+        background: linear-gradient(135deg, var(--accent3), #e9c440);
+        color: var(--black);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+        width: 100%;
+    }
+
+    .btn-ver-detalles:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    /* Estado vacío */
+    .no-data {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 60px 40px;
+        text-align: center;
+        color: var(--gray);
+    }
+
+    .no-data i {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        color: var(--accent3);
+        opacity: 0.5;
+    }
+
+    .no-data h4 {
+        color: var(--accent4);
+        font-weight: 700;
+        margin-bottom: 10px;
+        font-size: 1.5rem;
+    }
+
+    .no-data p {
+        color: var(--gray);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .estudiante-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .estudiante-nombre {
+            font-size: 1.1rem;
+        }
+
+        .estudiante-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header de la página -->
+    <div class="page-header">
+        <h2>
+            <i class="fas fa-graduation-cap"></i>
+                        Información Académica
+                    </h2>
+        <p>Selecciona a un estudiante para ver su información detallada</p>
+            </div>
+
+            {% if hijos %}
+    <!-- Tarjetas de estudiantes -->
+                    <div class="row">
+                        {% for hijo in hijos %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <a href="{{ url_for('padre.detalle_estudiante', estudiante_id=hijo.id_usuario) }}" class="text-decoration-none">
+                <div class="estudiante-card">
+                    <div class="estudiante-icon">
+                        {{ hijo.nombre[0]|upper }}{{ hijo.apellido[0]|upper }}
+                                    </div>
+                                    <h5 class="estudiante-nombre">{{ hijo.nombre_completo }}</h5>
+                    <p class="estudiante-documento">
+                        <i class="fas fa-id-card"></i>
+                        <span>{{ hijo.no_identidad }}</span>
+                    </p>
+                    <button type="button" class="btn-ver-detalles">
+                        <i class="fas fa-eye"></i>
+                        Ver Información Completa
+                    </button>
+                                </div>
+            </a>
+                        </div>
+                        {% endfor %}
+            </div>
+
+            {% else %}
+    <!-- Estado vacío -->
+            <div class="no-data">
+                <i class="fas fa-user-graduate"></i>
+                <h4>No tienes hijos registrados</h4>
+        <p>Contacta con la administración de la institución para vincular a tus hijos al sistema.</p>
+            </div>
+            {% endif %}
+</div>
+{% endblock %}

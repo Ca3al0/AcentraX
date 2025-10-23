@@ -1,0 +1,650 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Sedes{% endblock %}
+
+{% block content %}
+<style>
+    /* Variables CSS usando la paleta de colores del diseño anterior */
+    :root {
+        --accent1: #F95738;
+        --accent2: #EE964B;
+        --accent3: #F4D35E;
+        --accent4: #0D3B66;
+        --light: #FAF0CA;
+        --white: #FFFFFF;
+        --black: #333333;
+        --gray: #666666;
+        --light-gray: #F8F9FA;
+        --border: #E9ECEF;
+        --card-bg: #FFFFFF;
+        --header-bg: #FFFFFF;
+        --main-bg: #F8F9FA;
+        --shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.15);
+        --gradient-primary: linear-gradient(135deg, var(--accent4), #1a5080);
+        --gradient-secondary: linear-gradient(135deg, var(--accent3), #e9c440);
+        --gradient-accent: linear-gradient(135deg, var(--accent1), #ff6b4a);
+    }
+
+    /* FIX CRÍTICO: Asegurar que los inputs sean interactivos */
+    #nombre {
+        pointer-events: auto !important;
+        user-select: auto !important;
+        -webkit-user-select: auto !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 9999 !important;
+    }
+
+    .form-control {
+        pointer-events: auto !important;
+        user-select: auto !important;
+        background: var(--white) !important;
+    }
+
+    /* Estilos Generales */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, var(--light) 0%, var(--main-bg) 100%);
+        color: var(--black);
+        min-height: 100vh;
+    }
+
+    /* Encabezado Mejorado */
+    .header-main {
+        background: var(--gradient-primary);
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-main::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+    }
+
+    .h4 {
+        color: var(--white);
+        font-weight: 800;
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        position: relative;
+        z-index: 2;
+    }
+
+    .header-icons {
+        position: relative;
+        z-index: 2;
+    }
+
+    .header-icons a {
+        color: var(--white) !important;
+        opacity: 0.9;
+        transition: all 0.3s ease;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .header-icons a:hover {
+        opacity: 1;
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Contenedor principal */
+    .main-container {
+        padding: 0 1rem;
+    }
+
+    /* Tarjetas Mejoradas */
+    .card {
+        border-radius: 20px;
+        border: none;
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .card-header {
+        background: var(--gradient-primary);
+        color: var(--white);
+        border: none;
+        border-radius: 20px 20px 0 0 !important;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--accent3);
+    }
+
+    .card-header h5 {
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    /* Formulario Mejorado */
+    .form-label {
+        font-weight: 600;
+        color: var(--accent4);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: var(--white);
+    }
+
+    .form-control:focus {
+        border-color: var(--accent4);
+        box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Botones Mejorados */
+    .btn-primary {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(13, 59, 102, 0.3);
+    }
+
+    .btn-danger {
+        background: var(--gradient-accent);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(249, 87, 56, 0.3);
+    }
+
+    /* Tabla Mejorada */
+    .table-responsive {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table thead th {
+        background: var(--gradient-primary);
+        color: var(--white);
+        border: none;
+        padding: 1.2rem 1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .table tbody td {
+        padding: 1.2rem 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        transition: all 0.3s ease;
+    }
+
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(13, 59, 102, 0.03);
+        transform: translateX(5px);
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background: rgba(250, 240, 202, 0.3);
+    }
+
+    /* Barra de búsqueda mejorada */
+    #searchBar {
+        border-radius: 25px;
+        border: 2px solid var(--border);
+        padding: 0.75rem 1.5rem;
+        background: var(--white);
+        transition: all 0.3s ease;
+    }
+
+    #searchBar:focus {
+        border-color: var(--accent4);
+        box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.1);
+    }
+
+    /* Alertas y mensajes flash */
+    .flash-messages .alert {
+        border-radius: 15px;
+        border: none;
+        padding: 1.2rem 1.5rem;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Badge para estadísticas */
+    .stats-badge {
+        background: var(--gradient-secondary);
+        color: var(--black);
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Efectos de partículas para las tarjetas */
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 20% 80%, rgba(244, 211, 94, 0.05) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .card:hover::before {
+        opacity: 1;
+    }
+
+    /* Iconos de sede */
+    .sede-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--gradient-primary);
+        color: white;
+        margin-right: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .header-main {
+            padding: 1.5rem;
+        }
+        
+        .h4 {
+            font-size: 1.8rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+        
+        .header-icons a {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    /* Animaciones de entrada */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .col-lg-5 .card {
+        animation-delay: 0.1s;
+    }
+
+    .col-lg-7 .card {
+        animation-delay: 0.2s;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <header class="d-flex justify-content-between align-items-center header-main">
+        <div>
+            <h1 class="h4 mb-1">Gestión de Sedes</h1>
+            <p class="text-light mb-0 opacity-75">Administra las sedes de la institución</p>
+        </div>
+    </header>
+
+    <div class="main-container mt-4">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="row">
+            <div class="col-lg-5 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Registrar Nueva Sede</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="sedeForm" method="POST" action="{{ url_for('admin.api_sedes') }}">
+                            {{ form.hidden_tag() }}
+                            <div class="mb-4">
+                                <label for="{{ form.nombre.id }}" class="form-label">
+                                    <i class="fas fa-building me-2"></i>{{ form.nombre.label }}
+                                </label>
+                                {{ form.nombre(class="form-control", placeholder="Ingrese el nombre de la sede") }}
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-2 py-3">
+                                <i class="fas fa-save me-2"></i>Guardar Sede
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Sedes Registradas</h5>
+                            <small class="text-light opacity-75" id="sedesCount">Cargando...</small>
+                        </div>
+                        <div class="w-50">
+                            <input type="text" id="searchBar" class="form-control" placeholder="Buscar sede...">
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-building me-2"></i>Nombre de la Sede</th>
+                                        <th><i class="fas fa-cog me-2"></i>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sedesTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('sedeForm');
+        const tableBody = document.getElementById('sedesTableBody');
+        const searchBar = document.getElementById('searchBar');
+        const sedesCount = document.getElementById('sedesCount');
+        const flashContainer = document.querySelector('.flash-messages');
+        let allSedes = [];
+
+        function showFlashMessage(message, category) {
+            flashContainer.innerHTML = '';
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${category} alert-dismissible fade show`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                <i class="fas fa-${category === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            flashContainer.appendChild(alertDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode === flashContainer) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function renderSedes(sedes) {
+            tableBody.innerHTML = '';
+            sedesCount.textContent = `${sedes.length} sede${sedes.length !== 1 ? 's' : ''} registrada${sedes.length !== 1 ? 's' : ''}`;
+            
+            if (sedes.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `
+                    <td colspan="2" class="text-center py-4">
+                        <i class="fas fa-building fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">No hay sedes registradas</p>
+                    </td>`;
+                tableBody.appendChild(noDataRow);
+            } else {
+                sedes.forEach(sede => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="sede-icon">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <strong>${sede.nombre}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="${sede.id}" title="Eliminar sede">
+                                <i class="fas fa-trash-alt me-1"></i> Eliminar
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+
+        // Function to load all sedes from the API
+        function fetchSedes() {
+            fetch('{{ url_for("admin.api_sedes") }}')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al cargar sedes.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    allSedes = data;
+                    renderSedes(allSedes);
+                })
+                .catch(error => {
+                    console.error('Error al cargar sedes:', error);
+                    showFlashMessage('No se pudieron cargar las sedes. Por favor, inténtalo de nuevo.', 'danger');
+                });
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+            
+            // Obtener los datos del formulario como objeto
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('{{ url_for("admin.api_sedes") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(JSON.stringify(errorData));
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.message) {
+                    form.reset();
+                    fetchSedes();
+                    showFlashMessage(result.message, 'success');
+                } else if (result.error) {
+                    showFlashMessage(result.error, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error al crear sede:', error);
+                try {
+                    const errorDetails = JSON.parse(error.message);
+                    if (errorDetails.errors) {
+                        Object.keys(errorDetails.errors).forEach(key => {
+                            const input = document.getElementById(key);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                input.nextElementSibling.textContent = errorDetails.errors[key].join(', ');
+                            }
+                        });
+                    } else if (errorDetails.error) {
+                        showFlashMessage(errorDetails.error, 'danger');
+                    }
+                } catch (parseError) {
+                    console.error('Error parse:', parseError);
+                    showFlashMessage('Error de red. No se pudo conectar con el servidor.', 'danger');
+                }
+                fetchSedes();
+            });
+        });
+
+        // Handle sede deletion
+        tableBody.addEventListener('click', function(event) {
+            if (event.target.closest('.delete-btn')) {
+                const button = event.target.closest('.delete-btn');
+                const sedeId = button.dataset.id;
+                const sedeNombre = button.closest('tr').querySelector('td:first-child strong').textContent;
+                
+                if (confirm(`¿Estás seguro de que quieres eliminar la sede "${sedeNombre}"?`)) {
+                    fetch('{{ url_for("admin.api_sedes") }}', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: sedeId })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => { 
+                                throw new Error(JSON.stringify(errorData)); 
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.message) {
+                            showFlashMessage(result.message, 'success');
+                            fetchSedes();
+                        } else if (result.error) {
+                            showFlashMessage(result.error, 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al eliminar sede:', error);
+                        try {
+                            const errorDetails = JSON.parse(error.message);
+                            if (errorDetails.error) { 
+                                showFlashMessage(errorDetails.error, 'danger'); 
+                            }
+                        } catch (parseError) {
+                            showFlashMessage('Error de red. No se pudo eliminar la sede.', 'danger');
+                        }
+                        fetchSedes();
+                    });
+                }
+            }
+        });
+
+        // Handle search in the table
+        searchBar.addEventListener('keyup', function() {
+            const searchText = this.value.toLowerCase();
+            const filteredSedes = allSedes.filter(sede =>
+                sede.nombre.toLowerCase().includes(searchText)
+            );
+            renderSedes(filteredSedes);
+        });
+
+        // Initial load
+        fetchSedes();
+    });
+</script>
+{% endblock %}

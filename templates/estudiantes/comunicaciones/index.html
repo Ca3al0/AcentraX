@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Correo - Acentrax</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estudiantes/comunicaciones.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <header class="email-header">
+            <div class="header-left">
+                <!-- Usa el nombre correcto de la ruta -->
+                <a href="{{ url_for('estudiante.estudiante_panel') }}" class="back-to-dashboard">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <i class="fas fa-envelope"></i>
+                    <span>Correo Acentrax</span>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar correos..." id="searchInput">
+                    <button class="search-btn" id="searchBtn">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        {{ current_user.nombre[0] if current_user else 'U' }}
+                    </div>
+                    <span>{{ current_user.nombre if current_user else 'Usuario' }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="email-layout">
+            <!-- Sidebar -->
+            <aside class="email-sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <button class="compose-btn" id="composeBtn">
+                        <i class="fas fa-edit"></i>
+                        <span>Redactar</span>
+                    </button>
+                </div>
+                
+                <nav class="folder-nav">
+                    <ul>
+                        <li class="folder-item active" data-folder="inbox">
+                            <i class="fas fa-inbox"></i>
+                            <span>Bandeja de entrada</span>
+                            <span class="email-count" id="inboxCount">0</span>
+                        </li>
+                        <li class="folder-item" data-folder="sent">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Enviados</span>
+                        </li>
+                        <li class="folder-item" data-folder="draft">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Borradores</span>
+                            <span class="email-count" id="draftsCount">0</span>
+                        </li>
+                        <li class="folder-item" data-folder="deleted">
+                            <i class="fas fa-trash-alt"></i>
+                            <span>Papelera</span>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <div class="user-avatar-small">
+                            {{ current_user.nombre[0] if current_user else 'U' }}
+                        </div>
+                        <div class="user-details">
+                            <strong>{{ current_user.nombre if current_user else 'Usuario' }}</strong>
+                            <span>{{ current_user.email if current_user else 'usuario@acentrax.com' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="email-main">
+                <!-- Email List -->
+                <div class="email-list-container" id="emailListContainer">
+                    <div class="email-list-header">
+                        <div class="list-controls">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="selectAll">
+                                <label for="selectAll"></label>
+                            </div>
+                            <button class="control-btn" id="refreshBtn" title="Actualizar">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="control-btn" id="deleteBtn" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="list-pagination">
+                            <span id="emailRange">0-0 de 0</span>
+                            <div class="pagination-controls">
+                                <button class="pagination-btn" id="prevPage" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="pagination-btn" id="nextPage" disabled>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="email-list" id="emailList">
+                        <!-- Los emails se cargarán aquí dinámicamente -->
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No hay mensajes</h3>
+                            <p>Tu bandeja de entrada está vacía</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email View -->
+                <div class="email-view" id="emailView" style="display: none;">
+                    <div class="email-view-header">
+                        <button class="back-btn" id="backToList">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <div class="email-actions">
+                            <button class="action-btn" id="replyEmail" title="Responder">
+                                <i class="fas fa-reply"></i>
+                            </button>
+                            <button class="action-btn" id="forwardEmail" title="Reenviar">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            <button class="action-btn" id="deleteEmail" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="email-content" id="emailContent">
+                        <!-- El contenido del email se cargará aquí -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal para redactar email -->
+    <div class="compose-modal" id="composeModal" style="display: none;">
+        <div class="compose-header">
+            <h3>Nuevo mensaje</h3>
+            <div class="compose-actions">
+                <button class="modal-btn" id="minimizeCompose">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="modal-btn" id="closeCompose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <form class="compose-form" id="composeForm">
+            <div class="compose-field">
+                <label for="composeTo">Para:</label>
+                <input type="text" placeholder="Buscar usuario..." id="composeTo" required>
+                <div class="suggestions" id="userSuggestions"></div>
+            </div>
+            <div class="compose-field">
+                <label for="composeSubject">Asunto:</label>
+                <input type="text" placeholder="Asunto del mensaje" id="composeSubject" required>
+            </div>
+            <div class="compose-body">
+                <textarea placeholder="Escribe tu mensaje aquí..." id="composeBody" required></textarea>
+            </div>
+            <div class="compose-footer">
+                <button type="submit" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Enviar
+                </button>
+                <button type="button" class="save-draft-btn" id="saveDraft">
+                    <i class="fas fa-save"></i>
+                    Guardar borrador
+                </button>
+                <button type="button" class="cancel-btn" id="cancelCompose">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="notifications" id="notifications"></div>
+
+    <script src="{{ url_for('static', filename='js/estudiantes/comunicaciones.js') }}"></script>
+</body>
+</html>

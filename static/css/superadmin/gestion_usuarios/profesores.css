@@ -1,0 +1,273 @@
+
+    /* Variables CSS */
+    :root {
+        --color-primario: #0078ad;
+        --color-primario-oscuro: #00628e;
+        --color-texto-principal: #2c3e50;
+        --color-texto-secundario: #7f8c8d;
+        --color-blanco: #FFFFFF;
+        --color-fondo-seccion: #f8f9fa;
+        --color-borde-suave: #ecf0f1;
+    }
+
+    /* Estilos Generales */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--color-fondo-seccion);
+        color: var(--color-texto-principal);
+        margin: 0;
+    }
+
+    /* Header Principal */
+    .main-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background-color: var(--color-blanco);
+        border-bottom: 1px solid var(--color-borde-suave);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .main-header h1 {
+        font-size: 1.2rem;
+        color: var(--color-texto-principal);
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .header-icons {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 1.25rem;
+        color: var(--color-texto-secundario);
+    }
+
+    .header-icons a:hover {
+        color: var(--color-primario);
+    }
+
+    /* Área de Contenido Principal */
+    .content-area {
+        padding: 2rem;
+    }
+
+    /* Cabecera de la Página */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .title-action {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--color-texto-principal);
+    }
+
+    .btn-create {
+        background-color: var(--color-primario);
+        color: var(--color-blanco);
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-create:hover {
+        background-color: var(--color-primario-oscuro);
+    }
+    
+    .btn-create i {
+        margin-right: 0.5rem;
+    }
+
+    .placeholder-image {
+        width: 100%;
+        max-width: 250px;
+        height: 120px;
+        background-color: var(--color-borde-suave);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 8px;
+    }
+
+    .placeholder-image .fa-image {
+        font-size: 3rem;
+        color: var(--color-texto-secundario);
+    }
+
+    /* Contenedor de la Tabla */
+    .table-container {
+        background-color: var(--color-blanco);
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow-x: auto;
+    }
+
+    .table-controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+
+    /* Dropdown */
+    .dropdown {
+        position: relative;
+    }
+
+    .dropdown-toggle {
+        background-color: var(--color-blanco);
+        border: 1px solid var(--color-borde-suave);
+        color: var(--color-texto-principal);
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .dropdown-toggle:hover {
+        background-color: var(--color-borde-suave);
+    }
+
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: var(--color-blanco);
+        border: 1px solid var(--color-borde-suave);
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        padding: 0.5rem 0;
+        min-width: 180px;
+    }
+
+    .dropdown-menu a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: var(--color-texto-principal);
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .dropdown-menu a:hover {
+        background-color: var(--color-fondo-seccion);
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    /* Barra de Búsqueda */
+    .search-bar {
+        position: relative;
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .search-bar input {
+        width: 100%;
+        padding: 0.5rem 1rem 0.5rem 2.5rem;
+        border: 1px solid var(--color-borde-suave);
+        border-radius: 5px;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .search-bar input:focus {
+        outline: none;
+        border-color: var(--color-primario);
+        box-shadow: 0 0 0 3px rgba(0, 120, 173, 0.1);
+    }
+
+    .search-bar .fa-search {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-texto-secundario);
+    }
+
+    /* Tabla de Usuarios */
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--color-borde-suave);
+        vertical-align: middle;
+    }
+
+    .user-table th {
+        color: var(--color-texto-secundario);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    
+    .user-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-table a {
+        color: var(--color-primario);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+
+    .user-table a:hover {
+        color: var(--color-primario-oscuro);
+    }
+
+    .avatar {
+        width: 38px;
+        height: 38px;
+        background-color: var(--color-borde-suave);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--color-texto-secundario);
+        font-weight: bold;
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .tag-profesor {
+        background-color: rgba(0, 120, 173, 0.1);
+        color: var(--color-primario);
+        border: 1px solid rgba(0, 120, 173, 0.2);
+    }
+
+    .tag-new {
+        background-color: #e3f2fd;
+        color: #0078ad;
+        border: 1px solid #c9e6ff;
+    }

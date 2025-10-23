@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gestión de Equipos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/superadmin/gestion_usuarios/profesores.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/superadmin/gestion_inventario/equipos.css') }}">
+</head>
+<body>
+{% extends "base.html" %}
+{% block content %}
+
+<header class="main-header">
+    <a href="{{ url_for('admin.gestion_i') }}" class="btn btn-outline-secondary btn-sm border-0 me-3">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <h1>Gestión Inventario</h1>
+    <div class="header-icons">
+        <i class="fa-solid fa-bell"></i>
+        <i class="fa-solid fa-user"></i>
+    </div>
+</header>
+
+<!-- TARJETAS RESUMEN -->
+<main class="container-fluid p-4 py-3 m-3">
+    <section class="row mb-3">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="summary-card">
+                <i class="fa-solid fa-list"></i>
+                <h3 class="h6 mb-0">Total equipos</h3>
+                <p class="number mb-0" id="total-equipos">0</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="summary-card">
+                <i class="fa-solid fa-thumbs-up"></i>
+                <h3 class="h6 mb-0">Disponibles</h3>
+                <p class="number mb-0" id="equipos-disponibles">0</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="summary-card">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <h3 class="h6 mb-0">Mantenimiento</h3>
+                <p class="number mb-0" id="equipos-mantenimiento">0</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="summary-card">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h3 class="h6 mb-0">Incidentes</h3>
+                <p class="number mb-0" id="equipos-incidentes">0</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- TABLA PRINCIPAL + SALAS -->
+<main class="row m-3">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-9 col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Equipos Registrados</h5>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-light btn-sm me-3" onclick="mostrarTodosLosEquipos()">Ver Todos</button>
+                            <select id="registrosPorPagina" class="form-select form-select-sm w-auto">
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                            </select>
+                            <a href="{{ url_for('admin.crear_equipo') }}">
+                                <button type="button" class="btn btn-success-medium btn-sm me-3 ms-2" style="border-color: #28a745; background-color: #28a745;">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle text-center">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Equipo</th>
+                                        <th>Estado</th>
+                                        <th>Sede</th>
+                                        <th>Sala</th>
+                                        <th>Asignado a</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaEquiposGlobal"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <button id="btnAnterior" class="btn btn-outline-secondary btn-sm">‹ Anterior</button>
+                            <span id="paginaActual">Página 1</span>
+                            <button id="btnSiguiente" class="btn btn-outline-secondary btn-sm">Siguiente ›</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN SALAS - ACTUALIZADA PARA PESTAÑAS DINÁMICAS -->
+            <div class="col-md-3 col-12">
+                <div class="card shadow-sm salas-card">
+                    <div class="card-header">
+                        <!-- Pestañas dinámicas - se crean automáticamente -->
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <!-- Las pestañas se llenarán dinámicamente con JavaScript -->
+                        </ul>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="contenedorSede">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle text-center">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Sala</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaSalas"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal Editar Equipo -->
+<div class="modal fade" id="editarEquipoModal" tabindex="-1" aria-labelledby="editarEquipoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editarEquipoForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editarEquipoModalLabel">Editar Equipo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <!-- ID oculto -->
+          <input type="hidden" id="equipoId" name="id">
+          <!-- Campos ocultos para valores no editables -->
+          <input type="hidden" id="nombreEquipoHidden" name="nombre">
+          <input type="hidden" id="idReferenciaHidden" name="id_referencia">
+          <input type="hidden" id="tipoEquipoHidden" name="tipo">
+          <input type="hidden" id="salaEquipo" name="id_salon_fk"> <!-- Campo oculto para el ID del salón -->
+
+
+          <div class="row g-3">
+            <!-- Primera fila -->
+            <div class="col-md-6">
+              <label for="idReferencia" class="form-label">ID/Referencia</label>
+              <input type="text" class="form-control" id="idReferencia" readonly style="background-color: #f8f9fa;">
+            </div>
+            <div class="col-md-6">
+              <label for="usuarioAsignado" class="form-label">Usuario asignado</label>
+              <input type="text" class="form-control" id="usuarioAsignado" name="asignado_a">
+            </div>
+            
+            <!-- Segunda fila -->
+            <div class="col-md-6">
+              <label for="nombreEquipo" class="form-label">Nombre del equipo</label>
+              <input type="text" class="form-control" id="nombreEquipo" readonly style="background-color: #f8f9fa;">
+            </div>
+            <div class="col-md-6">
+                <label for="estadoEquipoTexto" class="form-label">Estado del equipo</label>
+                <input type="text" class="form-control" id="estadoEquipoTexto" readonly style="background-color: #f8f9fa;">
+                
+                <input type="hidden" id="estadoEquipo" name="estado">
+            </div>
+            
+            <!-- Tercera fila -->
+            <div class="col-md-6">
+              <label for="tipoEquipo" class="form-label">Tipo de equipo</label>
+              <input type="text" class="form-control" id="tipoEquipo" readonly style="background-color: #f8f9fa;">
+            </div>
+            <div class="col-md-6">
+              <label for="salaEquipoTexto" class="form-label">Sala</label>
+              <input type="text" class="form-control" id="salaEquipoTexto" readonly style="background-color: #f8f9fa;">
+              <!-- El campo oculto salaEquipo ya está arriba -->
+            </div>
+          </div>
+
+          <!-- Especificaciones Técnicas -->
+          <h6 class="mt-4 mb-3">Especificaciones Técnicas</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="sistemaOperativo" class="form-label">Sistema operativo</label>
+              <input type="text" class="form-control" id="sistemaOperativo" name="sistema_operativo">
+            </div>
+            <div class="col-md-6">
+              <label for="ramEquipo" class="form-label">RAM</label>
+              <input type="text" class="form-control" id="ramEquipo" name="ram">
+            </div>
+            <div class="col-md-6">
+              <label for="discoDuro" class="form-label">Disco duro</label>
+              <input type="text" class="form-control" id="discoDuro" name="disco_duro">
+            </div>
+            <div class="col-md-6">
+              <label for="fechaAdquisicion" class="form-label">Fecha de adquisición</label>
+              <input type="date" class="form-control" id="fechaAdquisicion" name="fecha_adquisicion">
+            </div>
+            <div class="col-12">
+              <label for="descripcionEquipo" class="form-label">Descripción</label>
+              <textarea class="form-control" id="descripcionEquipo" name="descripcion" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+              <label for="observacionesEquipo" class="form-label">Observaciones</label>
+              <textarea class="form-control" id="observacionesEquipo" name="observaciones" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLES -->
+<div class="modal fade" id="verEquipoModal" tabindex="-1" aria-labelledby="verEquipoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles del Equipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Columna izquierda -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>ID/Referencia:</strong> <span id="detalle-id-referencia">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Nombre del equipo:</strong> <span id="detalle-nombre">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Tipo de equipo:</strong> <span id="detalle-tipo">-</span>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Especificaciones Técnicas</h6>
+                        <div class="mb-3">
+                            <strong>Sistema Operativo:</strong> <span id="detalle-so">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>RAM:</strong> <span id="detalle-ram">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Disco Duro:</strong> <span id="detalle-disco">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Fecha de adquisición:</strong> <span id="detalle-fecha">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Descripción:</strong> <span id="detalle-descripcion">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Observaciones:</strong> <span id="detalle-observaciones">-</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna derecha -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Usuario asignado:</strong> <span id="detalle-usuario">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Estado del equipo:</strong> 
+                            <span id="detalle-estado-badge" class="badge">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Sala:</strong> <span id="detalle-sala">-</span>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Historial de incidentes</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detalle-incidentes">
+                                    <!-- Historial cargado dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Historial de mantenimientos</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detalle-mantenimientos">
+                                    <!-- Historial cargado dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ========================================
+// VARIABLES GLOBALES
+// ========================================
+let sedesGlobal = [];
+let equiposGlobal = [];
+let paginaActual = 1;
+let registrosPorPagina = 5;
+let salasDisponibles = [];
+let equiposConIncidentes = [];
+let equiposConMantenimientos = [];
+
+// ========================================
+// INICIALIZACIÓN
+// ========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Iniciando aplicación...');
+    await cargarEquiposConIncidentes();
+    await cargarEquiposConMantenimientos();
+    await cargarSedes();
+    configurarEventListeners();
+});
+
+function configurarEventListeners() {
+    document.getElementById('btnAnterior').addEventListener('click', paginaAnterior);
+    document.getElementById('btnSiguiente').addEventListener('click', paginaSiguiente);
+    document.getElementById('registrosPorPagina').addEventListener('change', cambiarRegistrosPorPagina);
+    document.getElementById('editarEquipoForm').addEventListener('submit', guardarEdicionEquipo);
+}
+
+// ========================================
+// CARGAR EQUIPOS CON INCIDENTES
+// ========================================
+async function cargarEquiposConIncidentes() {
+    try {
+        const res = await fetch('/admin/api/equipos/con-incidentes');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        equiposConIncidentes = data.equipos_con_incidentes || [];
+        console.log('Equipos con incidentes:', equiposConIncidentes);
+    } catch (error) {
+        console.error('Error cargando equipos con incidentes:', error);
+        equiposConIncidentes = [];
+    }
+}
+
+// ========================================
+// CARGAR EQUIPOS CON MANTENIMIENTOS
+// ========================================
+
+async function cargarEquiposConMantenimientos() {
+    try {
+        const res = await fetch('/admin/api/equipos/con-mantenimientos');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        equiposConMantenimientos = data.equipos_con_mantenimientos || [];
+        console.log('Equipos con mantenimientos:', equiposConMantenimientos);
+    } catch (error) {
+        console.error('Error cargando equipos con mantenimientos:', error);
+        equiposConMantenimientos = [];
+    }
+}
+
+// ========================================
+// CARGAR SALAS
+// ========================================
+async function cargarSalas() {
+    try {
+        const res = await fetch('/api/salas_todas');
+        const salas = await res.json();
+        salasDisponibles = salas.map(sala => ({
+            id: sala.id_salon,
+            nombre: sala.nombre,
+            sede_id: sala.sede_id,
+            sede_nombre: sala.sede_nombre || 'Desconocida'
+        }));
+    } catch (error) {
+        console.error('Error cargando salas:', error);
+    }
+}
+
+// ========================================
+// GESTIÓN DE SEDES Y TABS
+// ========================================
+function crearTabsSedes(sedes) {
+    const tabsContainer = document.querySelector('.nav.nav-tabs.card-header-tabs');
+    tabsContainer.innerHTML = '';
+    
+    sedes.forEach((sede, index) => {
+        const tabItem = document.createElement('li');
+        tabItem.className = 'nav-item';
+        
+        const tabLink = document.createElement('a');
+        tabLink.className = `nav-link ${index === 0 ? 'active' : ''}`;
+        tabLink.id = `tab-sede${sede.id}`;
+        tabLink.href = '#';
+        tabLink.textContent = sede.nombre;
+        tabLink.onclick = async (event) => {
+            event.preventDefault();
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            tabLink.classList.add('active');
+            await mostrarSede(sede.id_sede || sede.id);
+        };
+
+        
+        tabItem.appendChild(tabLink);
+        tabsContainer.appendChild(tabItem);
+    });
+}
+
+async function cargarSedes() {
+    try {
+        const res = await fetch('/admin/api/sedes');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const sedes = await res.json();
+        sedesGlobal = sedes;
+        
+        crearTabsSedes(sedes);
+        await cargarSalas();
+        await mostrarTodosLosEquipos();
+        
+    } catch (error) {
+        console.error('Error cargando sedes:', error);
+        await mostrarTodosLosEquipos();
+    }
+}
+
+async function mostrarSede(sedeId) {
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+    const tab = document.getElementById(`tab-sede${sedeId}`);
+    if (tab) tab.classList.add('active');
+
+    const tbodySalas = document.getElementById('tablaSalas');
+    tbodySalas.innerHTML = '';
+
+    try {
+        const res = await fetch(`/admin/api/sedes/${sedeId}/salas`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const salones = await res.json();
+        
+        if (salones.length === 0) {
+            tbodySalas.innerHTML = '<tr><td colspan="2" class="text-muted">No hay salas en esta sede.</td></tr>';
+            mostrarEquiposDeSede(sedeId);
+            return;
+        }
+
+        salones.forEach((salon, index) => {
+            const row = document.createElement('tr');
+            row.style.cursor = 'pointer';
+            row.onclick = () => mostrarEquiposDeSala(sedeId, salon.id);
+            row.innerHTML = `<td>${index + 1}</td><td>${salon.nombre}</td>`;
+            tbodySalas.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error('Error cargando salones:', error);
+        tbodySalas.innerHTML = '<tr><td colspan="2" class="text-danger">Error al cargar salas.</td></tr>';
+        mostrarEquiposDeSede(sedeId);
+    }
+}
+
+// ========================================
+// MOSTRAR EQUIPOS
+// ========================================
+async function mostrarTodosLosEquipos() {
+    equiposGlobal = [];
+    paginaActual = 1;
+    
+    try {
+        await cargarEquiposConIncidentes();
+        
+        const res = await fetch('/admin/api/equipos');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const equipos = await res.json();
+
+        equiposGlobal = equipos.map(eq => ({
+            ...eq,
+            sede: eq.sede_nombre || 'Desconocida',
+            sala: eq.salon_nombre || 'Desconocida'
+        }));
+        
+        console.log('📊 Total equipos:', equiposGlobal.length);
+        
+        actualizarResumen(equiposGlobal);
+        renderizarTabla();
+    } catch (error) {
+        console.error('Error cargando todos los equipos:', error);
+        equiposGlobal = [];
+        actualizarResumen(equiposGlobal);
+        renderizarTabla();
+    }
+}
+
+async function mostrarEquiposDeSede(id_sede) {
+    equiposGlobal = [];
+    paginaActual = 1;
+    
+    try {
+        await cargarEquiposConIncidentes();
+        
+        const resSalas = await fetch(`/admin/api/sedes/${id_sede}/salas`);
+        if (!resSalas.ok) throw new Error(`HTTP error! status: ${resSalas.status}`);
+        const salas = await resSalas.json();
+
+        for (const sala of salas) {
+            const resEquipos = await fetch(`/admin/api/sedes/${id_sede}/salas/${sala.id_salon}/equipos`);
+            if (!resEquipos.ok) throw new Error(`HTTP error! status: ${resEquipos.status}`);
+            const equipos = await resEquipos.json();
+            equipos.forEach(eq => {
+                equiposGlobal.push({
+                    ...eq,
+                    sede: sedesGlobal.find(s => s.id === id_sede)?.nombre || 'Desconocida',
+                    sala: sala.nombre || 'Desconocida'
+                });
+            });
+        }
+        actualizarResumen(equiposGlobal);
+        renderizarTabla();
+    } catch (error) {
+        console.error('Error cargando equipos de la sede:', error);
+        equiposGlobal = [];
+        actualizarResumen(equiposGlobal);
+        renderizarTabla();
+    }
+}
+
+async function mostrarEquiposDeSala(id_sede, id_salon) {
+    equiposGlobal = [];
+    paginaActual = 1;
+    
+    try {
+        await cargarEquiposConIncidentes();
+        
+        const res = await fetch(`/admin/api/sedes/${id_sede}/salas/${id_salon}/equipos`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const equipos = await res.json();
+
+        const sede = sedesGlobal.find(s => s.id === id_sede);
+        const sala = salasDisponibles.find(s => s.id === id_salon);
+
+        equipos.forEach(eq => {
+            equiposGlobal.push({
+                ...eq,
+                sede: sede ? sede.nombre : 'Desconocida',
+                sala: sala ? sala.nombre : 'Desconocida'
+            });
+        });
+
+        actualizarResumen(equiposGlobal);
+        renderizarTabla();
+    } catch (error) {
+        console.error('Error cargando equipos:', error);
+        equiposGlobal = [];
+        actualizarResumen(equiposGlobal);
+        renderizarTabla();
+    }
+}
+
+// ========================================
+// RENDERIZAR TABLA
+// ========================================
+function renderizarTabla() {
+    const tbody = document.getElementById('tablaEquiposGlobal');
+    tbody.innerHTML = '';
+
+    const inicio = (paginaActual - 1) * registrosPorPagina;
+    const fin = inicio + registrosPorPagina;
+    const equiposPagina = equiposGlobal.slice(inicio, fin);
+
+    if (equiposPagina.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-muted py-3">No se encontraron equipos.</td></tr>`;
+        document.getElementById('paginaActual').textContent = `Página 0 de 0`;
+        document.getElementById('btnAnterior').disabled = true;
+        document.getElementById('btnSiguiente').disabled = true;
+        return;
+    }
+
+    equiposPagina.forEach(eq => {
+        const equipoId = parseInt(eq.id_equipo);
+        const tieneIncidente = equiposConIncidentes.includes(eq.id_equipo);
+        const tieneMantenimiento = equiposConMantenimientos.includes(eq.id_equipo);
+        
+        console.log(`Equipo: ${eq.nombre}, ID: ${equipoId}, Incidente: ${tieneIncidente}`);
+
+        let estadoBadge = '';
+        if (eq.estado === 'Disponible') estadoBadge = `<span class="badge text-bg-primary">Disponible</span>`;
+        else if (eq.estado === 'Asignado') estadoBadge = `<span class="badge text-bg-secondary">Asignado</span>`;
+        else if (eq.estado === 'Mantenimiento') estadoBadge = `<span class="badge text-bg-warning">Mantenimiento</span>`;
+        else if (eq.estado === 'Incidente') estadoBadge = `<span class="badge text-bg-danger">Incidente</span>`;
+        else if (eq.estado === 'Revisión') estadoBadge = `<span class="badge text-bg-info">Revisión</span>`;
+        else estadoBadge = `<span class="badge text-bg-light">${eq.estado || 'Desconocido'}</span>`;
+
+        const row = document.createElement('tr');
+        
+        if (tieneIncidente) {
+            row.classList.add('equipo-con-incidente');
+        } else if (tieneMantenimiento) {
+            row.classList.add('equipo-con-mantenimiento');
+        }
+        
+        row.innerHTML = `
+            <td>
+                ${tieneIncidente ? '<i class="fa-solid fa-exclamation-triangle text-danger me-2" title="Tiene incidentes activos"></i>' : ''}
+                ${tieneMantenimiento && !tieneIncidente ? '<i class="fa-solid fa-wrench text-warning me-2" title="Tiene mantenimientos programados"></i>' : ''}
+                ${eq.nombre || '-'}
+            </td>
+            <td>${estadoBadge}</td>
+            <td>${eq.sede || '-'}</td>
+            <td>${eq.sala || '-'}</td>
+            <td>${eq.asignado_a || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-info me-2" onclick="verEquipo(${eq.id_equipo})">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning me-2" onclick="editarEquipo(${eq.id_equipo})">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="eliminarEquipo(${eq.id_equipo})">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td> 
+        `;
+        tbody.appendChild(row);
+    });
+
+    const totalPaginas = Math.ceil(equiposGlobal.length / registrosPorPagina);
+    document.getElementById('paginaActual').textContent = `Página ${paginaActual} de ${totalPaginas}`;
+    document.getElementById('btnAnterior').disabled = paginaActual === 1;
+    document.getElementById('btnSiguiente').disabled = paginaActual >= totalPaginas;
+}
+
+// ========================================
+// PAGINACIÓN
+// ========================================
+function paginaAnterior() {
+    if (paginaActual > 1) {
+        paginaActual--;
+        renderizarTabla();
+    }
+}
+
+function paginaSiguiente() {
+    const totalPaginas = Math.ceil(equiposGlobal.length / registrosPorPagina);
+    if (paginaActual < totalPaginas) {
+        paginaActual++;
+        renderizarTabla();
+    }
+}
+
+function cambiarRegistrosPorPagina(e) {
+    registrosPorPagina = parseInt(e.target.value);
+    paginaActual = 1;
+    renderizarTabla();
+}
+
+// ========================================
+// RESUMEN
+// ========================================
+function actualizarResumen(equipos) {
+    const total = equipos.length;
+    const disponibles = equipos.filter(e => e.estado === 'Disponible').length;
+    
+    // ✅ Contar equipos con mantenimientos activos (basado en el array)
+    const conMantenimiento = equipos.filter(e => 
+        equiposConMantenimientos.includes(parseInt(e.id_equipo))
+    ).length;
+    
+    // ✅ Contar equipos con incidentes activos (basado en el array)
+    const conIncidentes = equipos.filter(e => 
+        equiposConIncidentes.includes(parseInt(e.id_equipo))
+    ).length;
+
+    document.getElementById('total-equipos').textContent = total;
+    document.getElementById('equipos-disponibles').textContent = disponibles;
+    document.getElementById('equipos-mantenimiento').textContent = conMantenimiento;
+    document.getElementById('equipos-incidentes').textContent = conIncidentes;
+}
+
+// ========================================
+// EDITAR EQUIPO
+// ========================================
+async function editarEquipo(id) {
+    try {
+        const res = await fetch(`/admin/api/equipos/${id}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const equipo = await res.json();
+
+        document.getElementById('equipoId').value = equipo.id || '';
+        document.getElementById('idReferencia').value = equipo.id_referencia || '';
+        document.getElementById('nombreEquipo').value = equipo.nombre || '';
+        document.getElementById('tipoEquipo').value = equipo.tipo || '';
+        document.getElementById('usuarioAsignado').value = equipo.asignado_a || '';
+        document.getElementById('estadoEquipoTexto').value = equipo.estado || '';
+        document.getElementById('estadoEquipo').value = equipo.estado || ''; 
+        document.getElementById('salaEquipoTexto').value = equipo.salon_nombre || '';
+        document.getElementById('nombreEquipoHidden').value = equipo.nombre || '';
+        document.getElementById('idReferenciaHidden').value = equipo.id_referencia || '';
+        document.getElementById('tipoEquipoHidden').value = equipo.tipo || '';
+        document.getElementById('sistemaOperativo').value = equipo.sistema_operativo || '';
+        document.getElementById('ramEquipo').value = equipo.ram || '';
+        document.getElementById('discoDuro').value = equipo.disco_duro || '';
+        document.getElementById('fechaAdquisicion').value = equipo.fecha_adquisicion || '';
+        document.getElementById('descripcionEquipo').value = equipo.descripcion || '';
+        document.getElementById('observacionesEquipo').value = equipo.observaciones || '';
+
+        new bootstrap.Modal(document.getElementById('editarEquipoModal')).show();
+    } catch (err) {
+        console.error('Error al editar equipo', err);
+        alert('Error al cargar los datos del equipo para edición.');
+    }
+}
+
+async function guardarEdicionEquipo(e) {
+    e.preventDefault();
+    const id = document.getElementById('equipoId').value;
+    
+    const data = {
+        asignado_a: document.getElementById('usuarioAsignado').value,
+        estado: document.getElementById('estadoEquipo').value,
+        sistema_operativo: document.getElementById('sistemaOperativo').value,
+        ram: document.getElementById('ramEquipo').value,
+        disco_duro: document.getElementById('discoDuro').value,
+        fecha_adquisicion: document.getElementById('fechaAdquisicion').value,
+        descripcion: document.getElementById('descripcionEquipo').value,
+        observaciones: document.getElementById('observacionesEquipo').value,
+        id_salon_fk: document.getElementById('salaEquipo').value
+    };
+
+    try {
+        const res = await fetch(`/admin/api/equipos/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const responseData = await res.json();
+
+        if (res.ok) {
+            alert(responseData.message || 'Equipo actualizado con éxito.');
+            bootstrap.Modal.getInstance(document.getElementById('editarEquipoModal')).hide();
+            await mostrarTodosLosEquipos();
+        } else {
+            alert(`Error al actualizar el equipo: ${responseData.error || 'Error desconocido'}`);
+        }
+    } catch (err) {
+        console.error('Error al actualizar equipo', err);
+        alert('Error de conexión al actualizar el equipo.');
+    }
+}
+
+// ========================================
+// ELIMINAR EQUIPO
+// ========================================
+async function eliminarEquipo(id) {
+    const equipo = equiposGlobal.find(e => e.id === id);
+    const nombreEquipo = equipo ? equipo.nombre : 'este equipo';
+    
+    if (!confirm(`¿Estás seguro de que deseas eliminar "${nombreEquipo}"? Esta acción no se puede deshacer.`)) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/admin/api/equipos/${id}`, { 
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const responseData = await res.json();
+        
+        if (res.ok) {
+            alert(responseData.message || 'Equipo eliminado con éxito.');
+            await mostrarTodosLosEquipos();
+        } else {
+            alert(`Error al eliminar el equipo: ${responseData.error || 'Error desconocido'}`);
+        }
+    } catch (err) {
+        console.error('Error al eliminar equipo', err);
+        alert('Error de conexión al eliminar el equipo.');
+    }
+}
+
+// ========================================
+// VER EQUIPO
+// ========================================
+async function verEquipo(id) {
+    try {
+        const res = await fetch(`/admin/api/equipos/${id}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const equipo = await res.json();
+
+        document.getElementById('detalle-id-referencia').textContent = equipo.id_referencia || '-';
+        document.getElementById('detalle-nombre').textContent = equipo.nombre || '-';
+        document.getElementById('detalle-tipo').textContent = equipo.tipo || '-';
+        document.getElementById('detalle-usuario').textContent = equipo.asignado_a || '-';
+        document.getElementById('detalle-sala').textContent = equipo.salon_nombre || '-';
+        
+        const estadoBadge = document.getElementById('detalle-estado-badge');
+        estadoBadge.textContent = equipo.estado || 'Desconocido';
+        estadoBadge.className = 'badge ';
+        if (equipo.estado === 'Disponible') estadoBadge.className += 'text-bg-primary';
+        else if (equipo.estado === 'Asignado') estadoBadge.className += 'text-bg-secondary';
+        else if (equipo.estado === 'Mantenimiento') estadoBadge.className += 'text-bg-warning';
+        else if (equipo.estado === 'Incidente') estadoBadge.className += 'text-bg-danger';
+        else if (equipo.estado === 'Revisión') estadoBadge.className += 'text-bg-info';
+        else estadoBadge.className += 'text-bg-light';
+
+        document.getElementById('detalle-so').textContent = equipo.sistema_operativo || '-';
+        document.getElementById('detalle-ram').textContent = equipo.ram || '-';
+        document.getElementById('detalle-disco').textContent = equipo.disco_duro || '-';
+        document.getElementById('detalle-fecha').textContent = equipo.fecha_adquisicion || '-';
+        document.getElementById('detalle-descripcion').textContent = equipo.descripcion || '-';
+        document.getElementById('detalle-observaciones').textContent = equipo.observaciones || '-';
+
+        const incidentesTable = document.getElementById('detalle-incidentes');
+        if (equipo.incidentes && equipo.incidentes.length > 0) {
+            incidentesTable.innerHTML = equipo.incidentes.map(inc => `
+                <tr>
+                    <td>${inc.fecha}</td>
+                    <td>${inc.descripcion}</td>
+                </tr>
+            `).join('');
+        } else {
+            incidentesTable.innerHTML = '<tr><td colspan="2" class="text-muted">Sin incidentes registrados</td></tr>'; 
+        }
+
+        const mantenimientosTable = document.getElementById('detalle-mantenimientos');
+        if (equipo.mantenimientos && equipo.mantenimientos.length > 0) {
+            mantenimientosTable.innerHTML = equipo.mantenimientos.map(mant => `
+                <tr>
+                    <td>${mant.fecha}</td>
+                    <td>${mant.tipo}</td>
+                    <td>${mant.estado}</td>
+                </tr>
+            `).join('');
+        } else {
+            mantenimientosTable.innerHTML = '<tr><td colspan="3" class="text-muted">Sin mantenimientos registrados</td></tr>';
+        }
+
+        new bootstrap.Modal(document.getElementById('verEquipoModal')).show();
+    } catch (err) {
+        console.error('Error al ver equipo', err);
+        alert('Error al cargar los detalles del equipo.');
+    }
+}
+</script>
+{% endblock %}
+</body>
+</html>
