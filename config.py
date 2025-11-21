@@ -3,7 +3,7 @@ import os
 class Config:
     # --- CONFIGURACIÓN DE BASE DE DATOS ---
     # 1. Intentamos obtener la URL de la base de datos de las variables de entorno (Railway)
-    db_url = os.environ.get('DATABASE_URL')
+    db_url = os.environ.get('MYSQL_URL')
     
     # 2. Corrección para Railway: SQLAlchemy necesita 'mysql+pymysql://' pero a veces recibe 'mysql://'
     if db_url and db_url.startswith("mysql://"):
