@@ -18,3 +18,4 @@ WTForms==3.2.1
 WTForms-SQLAlchemy==0.4.2
 cryptography==46.0.3
 gunicorn==22.0.0
+email-validator==2.1.1
