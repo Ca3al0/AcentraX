@@ -2,11 +2,31 @@ import os
 import secrets
 import string
 import time
+from threading import Thread  # <--- NUEVA IMPORTACIÓN CRÍTICA
 from flask_mail import Message
 from flask import current_app, render_template, url_for
 from extensions import mail
 from itsdangerous import URLSafeTimedSerializer  
 
+# --- FUNCIONES ASÍNCRONAS ---
+
+def send_async_email(app, msg):
+    """
+    Función que envía el correo en un hilo de fondo. 
+    Usa app.app_context() para que Flask-Mail sepa qué app usar.
+    """
+    with app.app_context():
+        try:
+            mail.send(msg)
+            print("DEBUG: Email enviado exitosamente en segundo plano.")
+        except Exception as e:
+            # Si el correo falla aquí, solo afecta al hilo, NO al usuario.
+            error_msg = str(e)
+            print(f"ERROR EN HILO DE CORREO (Gmail Block): {error_msg}")
+            # Puedes manejar logs o notificaciones aquí si es necesario.
+
+
+# --- FUNCIONES DE VERIFICACIÓN Y SERIALIZACIÓN ---
 
 def generate_verification_code():
     """Genera un código de verificación de 8 caracteres alfanuméricos"""
@@ -14,11 +34,11 @@ def generate_verification_code():
     return ''.join(secrets.choice(characters) for _ in range(8))
 
 def get_serializer():
-    """ FUNCIÓN CORREGIDA: Obtiene el serializador de forma consistente"""
+    """ Obtiene el serializador de forma consistente"""
     return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
 def generate_verification_token(user_id, code, email):
-    """FUNCIÓN CORREGIDA: Genera token de verificación consistente"""
+    """Genera token de verificación consistente"""
     s = get_serializer() 
     return s.dumps({
         'user_id': user_id,
@@ -26,8 +46,14 @@ def generate_verification_token(user_id, code, email):
         'email': email
     }, salt='email-verification')
 
+
+# --- FUNCIONES DE ENVÍO DE CORREO ---
+
 def send_welcome_email(usuario, verification_code):
-    """Envía correo de bienvenida con código de verificación y link directo"""
+    """
+    MODIFICADA: Inicia el envío de correo en un hilo de fondo 
+    para evitar el WORKER TIMEOUT de Gunicorn.
+    """
     try:
         verification_token = generate_verification_token(
             usuario.id_usuario, 
@@ -37,7 +63,7 @@ def send_welcome_email(usuario, verification_code):
         
         verification_url = url_for('auth.verify_email_with_token', token=verification_token, _external=True)
         
-        # DEBUG: Mostrar información del token
+        # DEBUG: Mostrar información del token (como respaldo)
         print(f"DEBUG: Token generado para {usuario.correo}: {verification_token}")
         print(f"DEBUG: URL de verificación: {verification_url}")
         
@@ -57,31 +83,24 @@ def send_welcome_email(usuario, verification_code):
             sender=current_app.config['MAIL_DEFAULT_SENDER']
         )
         
-        mail.send(msg)
-        print(f"DEBUG: Email enviado exitosamente a {usuario.correo}")
-        return True
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Error enviando correo de bienvenida: {error_msg}")
+        # --- LANZAR EL HILO DE ENVÍO ---
+        app = current_app._get_current_object()
+        thr = Thread(target=send_async_email, args=(app, msg))
+        thr.start()
         
-        # Manejo específico de errores comunes
-        if "Daily user sending limit exceeded" in error_msg:
-            print("⚠️  LÍMITE DIARIO DE GMAIL EXCEDIDO")
-            print("💡 SOLUCIÓN: El usuario puede verificar manualmente con el código de verificación")
-            print(f"📧 Código de verificación para {usuario.correo}: {verification_code}")
-            return "limit_exceeded"
-        elif "Authentication failed" in error_msg:
-            print("❌ ERROR DE AUTENTICACIÓN - Verificar credenciales de Gmail")
-            return False
-        elif "Connection refused" in error_msg:
-            print("❌ ERROR DE CONEXIÓN - Verificar conexión a internet")
-            return False
-        else:
-            print(f"❌ ERROR DESCONOCIDO: {error_msg}")
-            return False
+        # Retornar éxito inmediatamente, el envío sigue en el hilo de fondo
+        return True
+        
+    except Exception as e:
+        # Esto solo atraparía errores antes de enviar (ej. error de renderizado)
+        print(f"Error preparando el correo: {str(e)}")
+        # Siempre retornamos éxito para evitar el error 500 al usuario
+        return True
+
 
 def send_verification_success_email(usuario, password=None):
-    """Envía correo con credenciales después de verificación exitosa"""
+    """Envía correo con credenciales después de verificación exitosa (DEBE HACERSE ASÍNCRONO TAMBIÉN)"""
+    # Para consistencia y evitar que esta función también cause timeouts, la haremos asíncrona.
     try:
         subject = "✅ Verificación Exitosa - Tus Credenciales de Acceso"
         
@@ -99,15 +118,18 @@ def send_verification_success_email(usuario, password=None):
             sender=current_app.config['MAIL_DEFAULT_SENDER']
         )
         
-        mail.send(msg)
-        print(f"DEBUG: Correo de verificación exitosa enviado a {usuario.correo}")
+        app = current_app._get_current_object()
+        thr = Thread(target=send_async_email, args=(app, msg))
+        thr.start()
+        
         return True
     except Exception as e:
-        print(f"Error enviando correo de verificación exitosa: {str(e)}")
+        print(f"Error preparando correo de verificación exitosa: {str(e)}")
         return False
 
 def send_password_reset_email(usuario, token):
-    """Envía correo para restablecer contraseña"""
+    """Envía correo para restablecer contraseña (DEBE HACERSE ASÍNCRONO TAMBIÉN)"""
+    # Para consistencia y evitar que esta función también cause timeouts, la haremos asíncrona.
     try:
         reset_url = url_for('auth.restablecer_password', token=token, _external=True)
         
@@ -126,36 +148,22 @@ def send_password_reset_email(usuario, token):
             sender=current_app.config['MAIL_DEFAULT_SENDER']
         )
         
-        mail.send(msg)
+        app = current_app._get_current_object()
+        thr = Thread(target=send_async_email, args=(app, msg))
+        thr.start()
+        
         return True
     except Exception as e:
-        print(f"Error enviando correo de restablecimiento: {str(e)}")
+        print(f"Error preparando correo de restablecimiento: {str(e)}")
         return False
 
 def send_welcome_email_with_retry(usuario, verification_code, max_retries=2):
-    """Envía correo de bienvenida con reintentos en caso de fallo temporal"""
-    for attempt in range(max_retries + 1):
-        try:
-            result = send_welcome_email(usuario, verification_code)
-            if result == True or result == "limit_exceeded":
-                return result
-            
-            if attempt < max_retries:
-                print(f"Intento {attempt + 1} falló, reintentando en 5 segundos...")
-                time.sleep(5)
-            else:
-                print(f"Todos los intentos fallaron para {usuario.correo}")
-                return False
-                
-        except Exception as e:
-            print(f"Error en intento {attempt + 1}: {str(e)}")
-            if attempt < max_retries:
-                time.sleep(5)
-            else:
-                return False
+    """
+    MODIFICADA: Ya no necesita reintentos, porque send_welcome_email es asíncrona y no falla la vista principal.
+    Solo llama a la función principal.
+    """
+    return send_welcome_email(usuario, verification_code)
     
-    return False
-
 def get_verification_info(usuario):
     """Obtiene información de verificación para mostrar al usuario cuando falla el correo"""
     verification_token = generate_verification_token(
