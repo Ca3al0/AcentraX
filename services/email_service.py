@@ -30,7 +30,7 @@ def sendgrid_send_email(to_email, subject, html_content):
             "to": [{"email": to_email}],
             "subject": subject
         }],
-        "from": {"email": "gestion.acentrax@outlook.com"},  # Puede ser tu mismo correo
+        "from": {"email": "gestion.acentrax@gmail.com.com"},  # Puede ser tu mismo correo
         "content": [{
             "type": "text/html",
             "value": html_content
